@@ -1,0 +1,147 @@
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents
+$ ls
+ Curso_Econ520/   desktop.ini  'gonano proyecto diciembre'/   macro/  'Plantillas personalizadas de Office'/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents
+$ cd Curso_Econ520
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520
+$ ls
+econ-520/  proyecto/  repo-curso-2026/  tareas/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520
+$ cd econ-520
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/econ-520 (master)
+$ cd ..
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520
+$ cd tareas
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas
+$ cd tarea01
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ pwd
+/c/Users/pedro/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cd /
+
+pedro@pedrocompu MINGW64 /
+$ cd ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cd ..
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas
+$ pwd
+/c/Users/pedro/OneDrive/Documents/Curso_Econ520/tareas
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas
+$ cd tarea01
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ mkdir prueba
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ mkdir -p prueba/sub1/sub2
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ echo "AguanteBoca" > archivo.txt
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls
+archivo.txt  prueba/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cd prueba
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01/prueba
+$ ls
+sub1/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01/prueba
+$ cd ..
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba
+sub1/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba/sub1
+sub2/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba/sub1/sub2
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls
+archivo.txt  prueba/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ mv archivo.txt prueba/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba
+archivo.txt  sub1/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cp prueba/archivo.txt prueba/copia.txt
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba
+archivo.txt  copia.txt  sub1/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ rm prueba/copia.txt
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba
+archivo.txt  sub1/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ rmdir prueba/sub1/sub2
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls
+prueba/
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ ls prueba/sub1
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ echo -e "banana\nmanzana\nnaranja\npera" > frutas.txt
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ wc -l frutas.txt
+4 frutas.txt
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cat frutas.txt | sort
+banana
+manzana
+naranja
+pera
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cat frutas.txt | sort | uniq
+banana
+manzana
+naranja
+pera
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ echo -e "banana\nbanana\nmanzana" > frutas.txt
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cat frutas.txt | sort
+banana
+banana
+manzana
+
+pedro@pedrocompu MINGW64 ~/OneDrive/Documents/Curso_Econ520/tareas/tarea01
+$ cat frutas.txt | sort | uniq
+banana
+manzana
