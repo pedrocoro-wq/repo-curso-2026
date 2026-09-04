@@ -1,0 +1,66 @@
+# Install.packages ("palmerpenguins")
+library(palmerpenguins)
+penguins
+library(ggthemes)
+library(ggplot2) 
+glimpse(penguins)
+
+# crear etiquetas y cambio de colores
+ggplot(data = penguins, mapping = aes(x = flipper_length_mm, y = body_mass_g,
+                                      colour = species, shape = species)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Body mass and flipper length",
+    subtitle = "Dimensions for Adelie, Chinstrap, and Gentoo Penguins",
+    x = "Flipper length (mm)",
+    y = "Body mass (g)",
+    colour = "Species",
+    shape = "Species"
+  ) +
+  scale_color_colorblind()
+
+# crear histograma
+ggplot(penguins, aes(x = body_mass_g)) + 
+  geom_histogram(binwidth = 50)
+
+class(penguins$body_mass_g)
+
+#histograma con columnas mas gruesas
+ggplot(penguins, aes(x = body_mass_g)) + 
+  geom_histogram(binwidth = 100)
+
+# grafico de densidad (basico)
+ggplot(penguins, aes(x = body_mass_g)) +
+  geom_density()
+
+# grafico de densidad (relleno por especie)
+ggplot(penguins, aes(x = body_mass_g, color = species, fill = species)) +
+  geom_density(alpha = 0.5)
+
+# construir boxplot especie por peso
+ggplot(penguins, aes(x = species, y = body_mass_g)) + 
+  geom_boxplot()
+
+# masa corporal y largo de la aleta por isla
+ggplot(
+  data = penguins,
+  mapping = aes(x = flipper_length_mm, y = body_mass_g, color = island)
+) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+# grafico en tres facetas
+ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point(aes(color = species, shape = species)) +
+  facet_wrap(~island)
+
+# analisis en cantidades
+ggplot(penguins, aes(x = island, fill = species)) +
+  geom_bar()
+
+# analisis en porcentajes / proporcion especie segun isla
+ggplot(penguins, aes(x = island, fill = species)) +
+  geom_bar(position = "fill")
+ggplot(penguins, aes(x = species, fill = island)) +
+  geom_bar(position = "fill")
