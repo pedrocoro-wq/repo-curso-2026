@@ -1,0 +1,222 @@
+# =====================================================================
+# Tarea 05: Minería de Texto - McKinsey (Mind-the-gap)
+# Análisis integral: Corpus, Sentimientos (Bing, AFINN, NRC), 
+# Modelado de Tópicos (LDA) y Redes de Bigramas.
+# =====================================================================
+
+# 1. Carga de librerías necesarias
+library(tidyverse)
+library(tidytext)
+library(topicmodels)
+library(textdata)     
+library(igraph)
+library(ggraph)
+library(reshape2)     
+
+# ---------------------------------------------------------------------
+# 1. Importación y preparación de datos
+# ---------------------------------------------------------------------
+
+# Leemos el archivo de datos remoto y asignamos un ID único por documento
+referencias <- read_csv("https://gitlab.com/uploads/-/system/personal_snippet/4897254/d83847870c9577a22a20063379f91120/DATA-T9-mckinsey-mind-the-gap-articles-20251020.csv") %>%
+  mutate(doc_id = row_number())
+
+glimpse(referencias)
+
+# Creamos dos versiones de tokens:
+# - tokens_all: con todo el texto (análisis de sentimiento)
+# - tokens: sin palabras vacías/stopwords (frecuencias y topicos)
+tokens_all <- referencias %>%
+  select(doc_id, title, article_text) %>%
+  unnest_tokens(word, article_text)
+
+tokens <- tokens_all %>%
+  anti_join(stop_words, by = "word")
+
+# ---------------------------------------------------------------------
+# 2. Exploración inicial del Corpus
+# ---------------------------------------------------------------------
+
+# 2.1 Distribución del largo de los artículos 
+doc_len <- tokens_all %>% 
+  count(doc_id, title, name = "n_palabras")
+
+summary(doc_len$n_palabras)
+
+ggplot(doc_len, aes(n_palabras)) +
+  geom_histogram(bins = 30, fill = "gray60", color = "white") +
+  theme_minimal() +
+  labs(title = "Distribución del largo de los artículos", x = "Cantidad de palabras", y = "Artículos")
+
+# 2.2 Palabras más frecuentes
+tokens %>%
+  count(word, sort = TRUE) %>%
+  slice_head(n = 20) %>%
+  ggplot(aes(n, reorder(word, n))) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Top 20 palabras más frecuentes", x = "Frecuencia", y = NULL)
+
+# 2.3 Términos más representativos por documento
+tokens %>%
+  count(doc_id, word) %>%
+  bind_tf_idf(word, doc_id, n) %>%
+  arrange(desc(tf_idf)) %>%
+  slice_head(n = 20)
+
+# ---------------------------------------------------------------------
+# 3. Análisis de Sentimiento
+# ---------------------------------------------------------------------
+
+# 3.1 Diccionario Bing (Clasificación binaria: positivo / negativo)
+bing <- get_sentiments("bing")
+
+sent_bing <- tokens_all %>%
+  inner_join(bing, by = "word") %>%
+  count(doc_id, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  left_join(doc_len, by = "doc_id") %>%
+  mutate(
+    neto = positive - negative,
+    neto_norm = neto / n_palabras
+  )
+
+ggplot(sent_bing, aes(neto_norm)) +
+  geom_histogram(bins = 30, fill = "darkseagreen", color = "white") +
+  theme_minimal() +
+  labs(title = "Sentimiento neto por artículo",
+       x = "Palabras positivas/Total palabras")
+
+# 3.2 Diccionario AFINN (Escala graduada de -5 a +5)
+sent_afinn <- tokens_all %>%
+  inner_join(get_sentiments("afinn"), by = "word") %>%
+  group_by(doc_id) %>%
+  summarise(afinn_total = sum(value), afinn_medio = mean(value), .groups = "drop")
+
+# Cruzamos ambos diccionarios para averiguar si comparten criterios
+sent_docs <- sent_bing %>% 
+  left_join(sent_afinn, by = "doc_id")
+
+cor(sent_docs$neto_norm, sent_docs$afinn_medio, use = "complete.obs")
+
+ggplot(sent_docs, aes(neto_norm, afinn_medio)) +
+  geom_point(alpha = 0.7, color = "tomato") +
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +
+  theme_minimal() +
+  labs(title = "Comparación de metodologías: Bing vs AFINN", 
+       x = "Bing neto normalizado", y = "AFINN promedio")
+
+# 3.3 Diccionario NRC (Emociones y sentimientos categóricos)
+tokens_all %>%
+  inner_join(get_sentiments("nrc"), by = "word", relationship = "many-to-many") %>%
+  count(sentiment, sort = TRUE) %>%
+  ggplot(aes(n, reorder(sentiment, n))) +
+  geom_col(fill = "mediumpurple") +
+  theme_minimal() +
+  labs(title = "Distribución de emociones en el corpus (NRC)", x = "Frecuencia", y = NULL)
+
+# ---------------------------------------------------------------------
+# 4. Modelado de Tópicos (LDA)
+# ---------------------------------------------------------------------
+
+# Filtramos palabras estructuralmente omnipresentes en el corpus 
+frecuencia_docs <- tokens %>%
+  distinct(doc_id, word) %>%
+  count(word, name = "n_documentos") %>%
+  mutate(porcentaje = n_documentos / n_distinct(tokens$doc_id)) %>%
+  arrange(desc(porcentaje))
+
+palabras_repetidas <- frecuencia_docs %>%
+  filter(porcentaje >= 0.7) %>%
+  pull(word)
+
+tokens_limpios <- tokens %>% 
+  filter(!word %in% palabras_repetidas)
+
+# Construcción de la Matriz Documento-Término 
+ref_dtm <- tokens_limpios %>%
+  count(doc_id, word) %>%
+  cast_dtm(doc_id, word, n)
+
+# Ajuste de modelos LDA con k = 10 y k = 15
+ref_lda_10 <- LDA(ref_dtm, k = 10, control = list(seed = 1234))
+ref_lda_15 <- LDA(ref_dtm, k = 15, control = list(seed = 1234))
+
+# Función auxiliar para graficar los tópicos más importantes de cada modelo
+graficar_topicos <- function(modelo, k) {
+  tidy(modelo, matrix = "beta") %>%
+    group_by(topic) %>%
+    slice_max(beta, n = 10) %>%
+    ungroup() %>%
+    mutate(term = reorder_within(term, beta, topic)) %>%
+    ggplot(aes(beta, term, fill = factor(topic))) +
+    geom_col(show.legend = FALSE) +
+    facet_wrap(~ topic, scales = "free") +
+    scale_y_reordered() +
+    theme_minimal() +
+    labs(title = paste("LDA: Principales términos por tópico (k =", k, ")"), x = "Beta", y = NULL)
+}
+
+graficar_topicos(ref_lda_10, 10)
+graficar_topicos(ref_lda_15, 15)
+
+# Evaluación de la perplejidad de los modelos
+perplexity(ref_lda_10)
+perplexity(ref_lda_15)
+
+# Distribución dominante de tópicos por artículo
+tidy(ref_lda_10, matrix = "gamma") %>%
+  group_by(document) %>%
+  slice_max(gamma, n = 1) %>%
+  ungroup() %>%
+  count(topic, name = "n_articulos")
+
+# ---------------------------------------------------------------------
+# 5. Análisis Avanzado: Redes de Bigramas
+# ---------------------------------------------------------------------
+
+bigrams <- referencias %>%
+  select(doc_id, article_text) %>%
+  unnest_tokens(bigram, article_text, token = "ngrams", n = 2) %>%
+  filter(!is.na(bigram)) %>%
+  separate(bigram, c("w1", "w2"), sep = " ")
+
+# Función auxiliar para graficar redes
+graficar_red <- function(conteos, min_n, titulo) {
+  g <- conteos %>% filter(n >= min_n) %>% graph_from_data_frame()
+  ggraph(g, layout = "fr") +
+    geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                   arrow = grid::arrow(length = unit(2, "mm")),
+                   end_cap = ggraph::circle(2, "mm")) +
+    geom_node_point(color = "steelblue", size = 3) +
+    geom_node_text(aes(label = name), vjust = 1, hjust = 1, size = 3, repel = TRUE) +
+    theme_void() +
+    labs(title = titulo)
+}
+
+# 5.1 Bigrams más frecuentes (sin stopwords)
+bigram_frecuentes <- bigrams %>%
+  filter(!w1 %in% stop_words$word, !w2 %in% stop_words$word) %>%
+  count(w1, w2, sort = TRUE)
+
+graficar_red(bigram_frecuentes, min_n = 20, titulo = "Red de Bigramas Frecuentes")
+
+# 5.2 Bigrams con negaciones y su impacto en el sentimiento
+negaciones <- c("not", "no", "never", "without")
+
+bigram_neg <- bigrams %>%
+  filter(w1 %in% negaciones) %>%
+  inner_join(get_sentiments("afinn"), by = c("w2" = "word")) %>%
+  count(w1, w2, value, sort = TRUE) %>%
+  mutate(contribucion = n * value)
+
+bigram_neg %>%
+  slice_max(abs(contribucion), n = 20) %>%
+  ggplot(aes(contribucion, reorder(paste(w1, w2), contribucion), fill = contribucion > 0)) +
+  geom_col(show.legend = FALSE) +
+  theme_minimal() +
+  labs(title = "Efecto de negaciones sobre la polaridad (AFINN)",
+       x = "Contribución neta (Frecuencia * Valor)", y = NULL)
+
+graficar_red(bigram_neg %>% select(w1, w2, n), min_n = 3,
+             titulo = "Red de Bigramas con Negaciones")
